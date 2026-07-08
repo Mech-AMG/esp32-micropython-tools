@@ -3,6 +3,7 @@ const path = require("path");
 const cp = require("child_process");
 
 let outputChannel;
+let lastSidebarCommand = null;
 const ownedExecutions = new Set();
 
 function activate(context) {
@@ -20,6 +21,7 @@ function activate(context) {
             provider
         ),
 
+        vscode.commands.registerCommand("esp32.selectPort", selectPort),
         vscode.commands.registerCommand("esp32.checkPorts", checkPorts),
         vscode.commands.registerCommand("esp32.uploadPermanent", uploadPermanent),
         vscode.commands.registerCommand("esp32.runTemporary", runTemporary),
@@ -27,7 +29,7 @@ function activate(context) {
         vscode.commands.registerCommand("esp32.listFiles", listFiles),
         vscode.commands.registerCommand("esp32.stopPermanent", stopPermanent),
         vscode.commands.registerCommand("esp32.monitor", monitorBoard),
-        vscode.commands.registerCommand("esp32.closeTerminals", closeAllTerminalsNow),
+        vscode.commands.registerCommand("esp32.closeTerminals", closeEsp32TaskTerminals),
 
         vscode.tasks.onDidEndTaskProcess((event) => {
             if (!ownedExecutions.has(event.execution)) {
@@ -83,10 +85,26 @@ class ESP32ToolsViewProvider {
         webviewView.webview.html = getWebviewHtml(iconUri);
 
         webviewView.webview.onDidReceiveMessage((message) => {
-            closeAllTerminalsNow();
+            const command = message.command;
+
+            if (command === "closeTerminals") {
+                closeEsp32TaskTerminals();
+                lastSidebarCommand = null;
+                return;
+            }
+
+            if (lastSidebarCommand && lastSidebarCommand !== command) {
+                closeEsp32TaskTerminals();
+            }
+
+            lastSidebarCommand = command;
 
             setTimeout(() => {
-                switch (message.command) {
+                switch (command) {
+                    case "selectPort":
+                        vscode.commands.executeCommand("esp32.selectPort");
+                        break;
+
                     case "checkPorts":
                         vscode.commands.executeCommand("esp32.checkPorts");
                         break;
@@ -113,10 +131,6 @@ class ESP32ToolsViewProvider {
 
                     case "monitor":
                         vscode.commands.executeCommand("esp32.monitor");
-                        break;
-
-                    case "closeTerminals":
-                        vscode.commands.executeCommand("esp32.closeTerminals");
                         break;
                 }
             }, 500);
@@ -182,6 +196,10 @@ function getWebviewHtml(iconUri) {
         filter: brightness(1.12);
     }
 
+    .purple {
+        background: #6f42c1;
+    }
+
     .green {
         background: #16825d;
     }
@@ -213,6 +231,7 @@ function getWebviewHtml(iconUri) {
         <p>Global ESP32 commands</p>
     </div>
 
+    <button class="purple" onclick="send('selectPort')">🔎 Select Port</button>
     <button onclick="send('checkPorts')">🔌 Check Ports</button>
     <button class="green" onclick="send('uploadPermanent')">⬆️ Upload Permanent</button>
     <button onclick="send('runTemporary')">▶️ Run Temporary</button>
@@ -222,7 +241,7 @@ function getWebviewHtml(iconUri) {
     <button class="green" onclick="send('monitor')">🖥️ Monitor</button>
     <button class="gray" onclick="send('closeTerminals')">❌ Close ESP32 Terminals</button>
 
-
+   
 <script>
     const vscode = acquireVsCodeApi();
 
@@ -236,20 +255,51 @@ function getWebviewHtml(iconUri) {
 }
 
 /* =========================
-   TERMINAL CONTROL
-========================= */
-
-function closeAllTerminalsNow() {
-    for (const terminal of vscode.window.terminals) {
-        terminal.dispose();
-    }
-
-    vscode.window.setStatusBarMessage("ESP32 terminals closed", 1500);
-}
-
-/* =========================
    ESP32 COMMANDS
 ========================= */
+
+async function selectPort() {
+    outputChannel.clear();
+    outputChannel.show(true);
+    outputChannel.appendLine("ESP32: Searching for ports...");
+    outputChannel.appendLine("");
+
+    const ports = await getMpremotePorts();
+
+    const items = [
+        {
+            label: "auto",
+            description: "Automatic port detection"
+        },
+        ...ports.map((port) => ({
+            label: port,
+            description: "Detected MicroPython device"
+        }))
+    ];
+
+    const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: "Select ESP32 serial port"
+    });
+
+    if (!selected) {
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration("esp32");
+
+    await config.update(
+        "port",
+        selected.label,
+        vscode.ConfigurationTarget.Global
+    );
+
+    vscode.window.showInformationMessage(
+        `ESP32 port selected: ${selected.label}`
+    );
+
+    outputChannel.appendLine("");
+    outputChannel.appendLine(`Selected port: ${selected.label}`);
+}
 
 async function checkPorts() {
     outputChannel.clear();
@@ -515,6 +565,98 @@ function runPythonToOutput(args) {
     });
 }
 
+function getMpremotePorts() {
+    return new Promise((resolve) => {
+        const config = vscode.workspace.getConfiguration("esp32");
+        const pythonCommand = config.get("pythonCommand", "python");
+
+        const child = cp.spawn(
+            pythonCommand,
+            ["-m", "mpremote", "devs"],
+            {
+                shell: false
+            }
+        );
+
+        let stdout = "";
+        let stderr = "";
+
+        child.stdout.on("data", (data) => {
+            stdout += data.toString();
+        });
+
+        child.stderr.on("data", (data) => {
+            stderr += data.toString();
+        });
+
+        child.on("error", (error) => {
+            outputChannel.appendLine(`Error: ${error.message}`);
+            vscode.window.showErrorMessage(
+                "Failed to check ports. Make sure Python and mpremote are installed."
+            );
+            resolve([]);
+        });
+
+        child.on("close", () => {
+            outputChannel.append(stdout);
+
+            if (stderr.trim()) {
+                outputChannel.appendLine(stderr);
+            }
+
+            const ports = parseMpremotePorts(stdout);
+
+            if (ports.length === 0) {
+                vscode.window.showWarningMessage(
+                    "No ESP32 ports found. You can still choose auto."
+                );
+            }
+
+            resolve(ports);
+        });
+    });
+}
+
+function parseMpremotePorts(text) {
+    const ports = [];
+
+    const lines = text.split(/\r?\n/);
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+            continue;
+        }
+
+        const windowsMatch = trimmed.match(/\bCOM\d+\b/i);
+        if (windowsMatch) {
+            ports.push(windowsMatch[0].toUpperCase());
+            continue;
+        }
+
+        const linuxMatch = trimmed.match(/\/dev\/tty[A-Za-z0-9._-]+/);
+        if (linuxMatch) {
+            ports.push(linuxMatch[0]);
+            continue;
+        }
+
+        const macMatch = trimmed.match(/\/dev\/cu\.[A-Za-z0-9._-]+/);
+        if (macMatch) {
+            ports.push(macMatch[0]);
+            continue;
+        }
+
+        const macTtyMatch = trimmed.match(/\/dev\/tty\.[A-Za-z0-9._-]+/);
+        if (macTtyMatch) {
+            ports.push(macTtyMatch[0]);
+            continue;
+        }
+    }
+
+    return [...new Set(ports)];
+}
+
 function closeEsp32TaskTerminals() {
     for (const terminal of vscode.window.terminals) {
         const name = terminal.name.toLowerCase();
@@ -530,11 +672,11 @@ function closeEsp32TaskTerminals() {
             terminal.dispose();
         }
     }
+
+    vscode.window.setStatusBarMessage("ESP32 terminals closed", 1500);
 }
 
-function deactivate() {
-    closeAllTerminalsNow();
-}
+function deactivate() {}
 
 module.exports = {
     activate,

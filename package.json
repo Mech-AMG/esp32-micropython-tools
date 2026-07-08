@@ -1,18 +1,38 @@
 {
   "name": "esp32-micropython-tools",
   "displayName": "ESP32 MicroPython Tools",
-  "description": "Global ESP32 MicroPython tools for upload, run, reset, monitor, list files, check ports, and stop permanent code.",
-  "version": "1.0.0",
+  "description": "Global ESP32 MicroPython tools for upload, run, reset, monitor, list files, check ports, select port, and stop permanent code.",
+  "version": "1.0.2",
   "publisher": "Mech-AMG",
   "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.90.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mech-AMG/esp32-micropython-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mech-AMG/esp32-micropython-tools/issues"
+  },
+  "homepage": "https://github.com/Mech-AMG/esp32-micropython-tools#readme",
+  "license": "MIT",
   "categories": [
-    "Other"
+    "Other",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "esp32",
+    "micropython",
+    "mpremote",
+    "embedded",
+    "iot",
+    "serial",
+    "microcontroller"
   ],
   "activationEvents": [
     "onView:esp32ToolsView",
+    "onCommand:esp32.selectPort",
     "onCommand:esp32.checkPorts",
     "onCommand:esp32.uploadPermanent",
     "onCommand:esp32.runTemporary",
@@ -25,6 +45,10 @@
   "main": "./extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "esp32.selectPort",
+        "title": "ESP32: Select Port"
+      },
       {
         "command": "esp32.checkPorts",
         "title": "ESP32: Check Ports"
@@ -59,6 +83,10 @@
       }
     ],
     "keybindings": [
+      {
+        "command": "esp32.selectPort",
+        "key": "ctrl+alt+p"
+      },
       {
         "command": "esp32.uploadPermanent",
         "key": "ctrl+alt+u",
@@ -106,12 +134,12 @@
         "esp32.pythonCommand": {
           "type": "string",
           "default": "python",
-          "description": "Python command used to run mpremote."
+          "description": "Python command used to run mpremote. Examples: python, python3, py."
         },
         "esp32.port": {
           "type": "string",
           "default": "auto",
-          "description": "ESP32 serial port. Use auto, COM3, COM4, /dev/ttyUSB0, etc."
+          "description": "ESP32 serial port. Use auto, COM3, COM4, /dev/ttyUSB0, /dev/ttyACM0, etc."
         },
         "esp32.permanentFileName": {
           "type": "string",
