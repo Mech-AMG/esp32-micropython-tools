@@ -1,67 +1,82 @@
 # ESP32 MicroPython Tools
 
-ESP32 MicroPython Tools is a Visual Studio Code extension designed to simplify ESP32 development with MicroPython.
-
-It provides useful commands and workflow shortcuts for students, makers, and embedded systems developers who use ESP32 boards with MicroPython.
+ESP32 MicroPython Tools is a Visual Studio Code extension for ESP32 development with MicroPython.
 
 ## Features
 
-- Run MicroPython files on ESP32
-- Stop the current running process
-- Close all active terminals before executing extension commands
-- Open ESP32-related tools quickly from VS Code
-- Improve the development workflow for ESP32 and MicroPython projects
+- Upload MicroPython files to ESP32
+- Run temporary MicroPython code
+- Stop currently running ESP32 code
+- Reset ESP32
+- Open serial monitor
+- List files on ESP32
+- Select and change the ESP32 serial port from VS Code settings
 
 ## Requirements
 
 Before using this extension, make sure you have:
 
 - Visual Studio Code
-- Python installed and added to PATH
-- MicroPython installed on the ESP32 board
-- A USB cable connected to the ESP32
-- The correct COM port selected
+- Python installed
+- `mpremote` installed
+- ESP32 connected by USB
+- MicroPython firmware installed on the ESP32
+
+Install mpremote:
+
+```bash
+pip install mpremote
+```
+
+## Extension Settings
+
+This extension supports the following settings:
+
+```json
+{
+  "esp32.port": "COM3",
+  "esp32.pythonCommand": "python"
+}
+```
+
+Change `COM3` to your ESP32 port, for example:
+
+```json
+{
+  "esp32.port": "COM5"
+}
+```
+
+For Linux/macOS, use a port like:
+
+```json
+{
+  "esp32.port": "/dev/ttyUSB0"
+}
+```
 
 ## Usage
 
-Open the Command Palette in VS Code:
+Open the Command Palette:
 
 ```text
 Ctrl + Shift + P
 ```
 
-Then search for:
+Search for:
 
 ```text
 ESP32
 ```
 
-Choose the command you want to run.
-
-## Extension Settings
-
-This extension may use settings such as:
-
-```json
-{
-  "esp32.pythonCommand": "python",
-  "esp32.port": "COM3"
-}
-```
-
-Change `COM3` to match your ESP32 port.
+Then choose the command you want to run.
 
 ## Known Issues
 
-- The ESP32 must be connected before running upload or serial commands.
+- Make sure Thonny, Arduino IDE, or another serial monitor is not using the same COM port.
 - If the port is busy, close all terminals and try again.
-- Make sure no other program, such as Thonny or Arduino IDE, is using the same COM port.
-
-## Repository
-
-This project can be hosted on GitHub as an open-source Visual Studio Code extension.
+- Select the correct port before uploading or running code.
 
 ## License
 
 This project is licensed under the MIT License.
-#
