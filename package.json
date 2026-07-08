@@ -1,0 +1,138 @@
+{
+  "name": "esp32-micropython-tools",
+  "displayName": "ESP32 MicroPython Tools",
+  "description": "Global ESP32 MicroPython tools for upload, run, reset, monitor, list files, check ports, and stop permanent code.",
+  "version": "1.0.0",
+  "publisher": "Mech-AMG",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:esp32ToolsView",
+    "onCommand:esp32.checkPorts",
+    "onCommand:esp32.uploadPermanent",
+    "onCommand:esp32.runTemporary",
+    "onCommand:esp32.reset",
+    "onCommand:esp32.listFiles",
+    "onCommand:esp32.stopPermanent",
+    "onCommand:esp32.monitor",
+    "onCommand:esp32.closeTerminals"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "esp32.checkPorts",
+        "title": "ESP32: Check Ports"
+      },
+      {
+        "command": "esp32.uploadPermanent",
+        "title": "ESP32: Upload Permanent"
+      },
+      {
+        "command": "esp32.runTemporary",
+        "title": "ESP32: Run Temporary"
+      },
+      {
+        "command": "esp32.reset",
+        "title": "ESP32: Reset"
+      },
+      {
+        "command": "esp32.listFiles",
+        "title": "ESP32: List Files"
+      },
+      {
+        "command": "esp32.stopPermanent",
+        "title": "ESP32: Stop Permanent"
+      },
+      {
+        "command": "esp32.monitor",
+        "title": "ESP32: Monitor"
+      },
+      {
+        "command": "esp32.closeTerminals",
+        "title": "ESP32: Close ESP32 Terminals"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "esp32.uploadPermanent",
+        "key": "ctrl+alt+u",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "esp32.runTemporary",
+        "key": "ctrl+alt+r",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "esp32.reset",
+        "key": "ctrl+alt+e"
+      },
+      {
+        "command": "esp32.monitor",
+        "key": "ctrl+alt+m"
+      },
+      {
+        "command": "esp32.closeTerminals",
+        "key": "ctrl+alt+s"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "esp32Tools",
+          "title": "ESP32",
+          "icon": "images/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "esp32Tools": [
+        {
+          "id": "esp32ToolsView",
+          "name": "MicroPython Tools",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ESP32 MicroPython Tools",
+      "properties": {
+        "esp32.pythonCommand": {
+          "type": "string",
+          "default": "python",
+          "description": "Python command used to run mpremote."
+        },
+        "esp32.port": {
+          "type": "string",
+          "default": "auto",
+          "description": "ESP32 serial port. Use auto, COM3, COM4, /dev/ttyUSB0, etc."
+        },
+        "esp32.permanentFileName": {
+          "type": "string",
+          "default": "main.py",
+          "description": "Filename used for permanent upload on ESP32."
+        },
+        "esp32.autoResetAfterUpload": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reset ESP32 after permanent upload."
+        },
+        "esp32.autoCloseTerminal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically close ESP32 task terminals after command finishes."
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.2.1"
+  }
+}
