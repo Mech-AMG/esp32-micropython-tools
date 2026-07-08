@@ -1,8 +1,0 @@
-node_modules/
-.vscode-test/
-*.vsix
-.DS_Store
-Thumbs.db
-out/
-dist/
-.env
