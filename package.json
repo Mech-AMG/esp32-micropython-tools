@@ -1,12 +1,12 @@
 {
-  "name": "esp32-micropython-tools",
-  "displayName": "ESP32 MicroPython Tools",
+  "name": "esp32-micropython-tool",
+  "displayName": "ESP32 MicroPython Tool",
   "description": "Global ESP32 MicroPython tools for upload, run, reset, monitor, list files, check ports, select port, and stop permanent code.",
   "version": "1.0.2",
-  "publisher": "Mech-AMG",
+  "publisher": "Mechatronics-Dev",
   "icon": "images/icon.png",
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.75.0"
   },
   "repository": {
     "type": "git",
@@ -160,7 +160,7 @@
     }
   },
   "devDependencies": {
-    "@types/vscode": "^1.90.0",
+    "@types/vscode": "^1.75.0",
     "@vscode/vsce": "^3.2.1"
   }
 }
